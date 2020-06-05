@@ -16,12 +16,6 @@
 /** \brief Declaration of function*/
 void command_usage(char *cmdName);
 
-/** \brief total number of filenames retrieved. */
-int num_files;
-
-/** \brief filenames of the files to be processed */
-char **filenames;
-
 /** \brief number of the next worker that will receive work to do*/
 int currWorker = 1;
 
@@ -145,7 +139,7 @@ void worker(int rank) {
  * @param argv pointer to the array that contains the arguments in the command.
  * @return EXIT_SUCCESS if the command was correctly executed, EXIT_FAILURE otherwise.
  */
-int process_command(int argc, char *argv[]) {
+int process_command(int argc, char *argv[], char **filenames) {
     /* option chosen by the user */
     int opt;
 
@@ -203,6 +197,8 @@ int main(int argc, char **argv) {
     // stores the number of processes that were launched by the mpi
     int world_size;
 
+    char **filenames;
+
     MPI_Init(&argc, &argv);
     MPI_Comm_size(MPI_COMM_WORLD, &world_size);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
@@ -214,7 +210,7 @@ int main(int argc, char **argv) {
         filenames = malloc((argc - 1) * sizeof(char *));
 
         // process the command and act according to it
-        int command_result = process_command(argc, argv);
+        int command_result = process_command(argc, argv, filenames);
         if (command_result != EXIT_SUCCESS)
             return command_result;
 
@@ -226,5 +222,4 @@ int main(int argc, char **argv) {
     MPI_Finalize();
     return 0;
 }
-
 
