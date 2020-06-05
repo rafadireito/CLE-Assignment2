@@ -13,9 +13,6 @@
 
 /* Generic parameters */
 
-/** \brief number of workers. */
-#define  N              4
-
 /** \brief largest word length. */
 #define  WORD_LENGTH    20
 
