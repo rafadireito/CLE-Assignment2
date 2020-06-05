@@ -9,7 +9,11 @@
     </configurations>
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="86e2811f-0e98-4654-9ad5-d0ece36a46b3" name="Default Changelist" comment="" />
+    <list default="true" id="86e2811f-0e98-4654-9ad5-d0ece36a46b3" name="Default Changelist" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/prog1" beforeDir="false" afterPath="$PROJECT_DIR$/prog1" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/prog1.c" beforeDir="false" afterPath="$PROJECT_DIR$/prog1.c" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -18,8 +22,12 @@
   <component name="ClangdSettings">
     <option name="formatViaClangd" value="false" />
   </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/.." />
+  </component>
   <component name="OCFindUsagesOptions" text="true" ivars="false" properties="true" derivedClasses="false" />
   <component name="ProjectId" id="1cajrlMdsAxLCYS7WFJ17Jwej17" />
+  <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
@@ -50,6 +58,7 @@
       <workItem from="1591111800716" duration="5586000" />
       <workItem from="1591126098700" duration="1948000" />
       <workItem from="1591139167460" duration="1136000" />
+      <workItem from="1591393080772" duration="2864000" />
     </task>
     <servers />
   </component>
