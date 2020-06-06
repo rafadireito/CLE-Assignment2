@@ -22,18 +22,6 @@ int currWorker = 1;
 /** \brief workers count*/
 int numWorkers;
 
-
-/**
- * Implements a "circular buffer", that will point the next worker to receive work
- * @return workerId
- */
-int getNextWorkerRank() {
-    if (currWorker > numWorkers)
-        currWorker = 1;
-    return currWorker++;
-}
-
-
 /**
  * Dispatcher function
  * Will be called, only by the dispatcher, to implement its life cycle
@@ -41,10 +29,10 @@ int getNextWorkerRank() {
  * @param nFiles num of files passed as argument
  */
 void dispatcher(char *filenames[], unsigned int nFiles) {
+    int workerId;
+    int lastWorkerReceivingInfo;
     // control info structure for sending and receiving messages
     ControlInfo controlInfo;
-    // id of the worker that will compute a value
-    int workerAssigned;
     // if true, we will send work to the workers
     bool isWorkToBeDone = true;
     // time limits
@@ -59,20 +47,32 @@ void dispatcher(char *filenames[], unsigned int nFiles) {
 
     // while there are results to be computed, send data to the workers
     while (get_data((ControlInfo *) &controlInfo)) {
-        // get next worker id
-        workerAssigned = getNextWorkerRank();
 
-        // tell worker there is work to be done
-        MPI_Send(&isWorkToBeDone, 1, MPI_C_BOOL, workerAssigned, 0, MPI_COMM_WORLD);
+        // send infos to the workers in a parallelized way
+        for (workerId=1; workerId <= numWorkers; workerId++) {
 
-        // send message to worker
-        MPI_Send(&controlInfo, sizeof(ControlInfo), MPI_BYTE, workerAssigned, 0, MPI_COMM_WORLD);
+            // save the last worker receiving info
+            lastWorkerReceivingInfo = workerId;
 
-        // wait for workers response
-        MPI_Recv(&controlInfo, sizeof(ControlInfo), MPI_BYTE, workerAssigned, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+            // tell worker there is work to be done
+            MPI_Send(&isWorkToBeDone, 1, MPI_C_BOOL, workerId, 0, MPI_COMM_WORLD);
 
-        // save the results in the dispatcher
-        write_worker_results((ControlInfo *) &controlInfo);
+            // send message to worker
+            MPI_Send(&controlInfo, sizeof(ControlInfo), MPI_BYTE, workerId, 0, MPI_COMM_WORLD);
+
+            // if there are no more data to process
+            if(workerId < numWorkers && !get_data((ControlInfo *) &controlInfo))
+                break;
+        }
+
+        for (workerId=1; workerId <= lastWorkerReceivingInfo; workerId++) {
+
+            // wait for workers response
+            MPI_Recv(&controlInfo, sizeof(ControlInfo), MPI_BYTE, workerId, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+
+            // save the results in the dispatcher
+            write_worker_results((ControlInfo *) &controlInfo);
+        }
     }
 
     // Inform workers there is no more work to be done

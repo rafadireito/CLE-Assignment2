@@ -17,7 +17,7 @@
 #define  WORD_LENGTH    20
 
 /** \brief number of tokens read by each worker. */
-#define  K              5
+#define  K              1000
 
 
 #endif
