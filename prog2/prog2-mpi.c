@@ -23,26 +23,16 @@ int currWorker = 1;
 int numWorkers;
 
 /**
- * Implements a "circular buffer", that will point the next worker to receive work
- * @return workerId
- */
-int getNextWorkerRank() {
-    if (currWorker > numWorkers)
-        currWorker = 1;
-    return currWorker++;
-}
-
-/**
  * Dispatcher function
  * Will be called, only by the dispatcher, to implement its life cycle
  * @param filenames name of the files passed by the user
  * @param nFiles num of files passed as argument
  */
 void dispatcher(char *filenames[], unsigned int nFiles) {
+    int workerId;
+    int lastWorkerReceivingInfo;
     // control info structure for sending and receiving messages
     ControlInfo controlInfo;
-    // id of the worker that will compute a value
-    int workerAssigned;
     // if true, we will send work to the workers
     bool isWorkToBeDone = true;
     // time limits
@@ -56,34 +46,47 @@ void dispatcher(char *filenames[], unsigned int nFiles) {
 
     // while there are results to be computed, send data to the workers
     while (getPieceOfData((ControlInfo *) &controlInfo)) {
-        // get next worker id
-        workerAssigned = getNextWorkerRank();
 
-        // tell worker there is work to be done
-        MPI_Send(&isWorkToBeDone, 1, MPI_C_BOOL, workerAssigned, 0, MPI_COMM_WORLD);
+        // send infos to the workers in a parallelized way
+        for (workerId=1; workerId <= numWorkers; workerId++){
 
-        // send message to worker
-        MPI_Send(&controlInfo, sizeof(ControlInfo), MPI_BYTE, workerAssigned, 0, MPI_COMM_WORLD);
+            // save the last worker receiving info
+            lastWorkerReceivingInfo = workerId;
 
-        // The structure containers pointers to the arrays x and y. The MPI cant pass this pointers, so
-        // we will have to pass them as arrays
-        double x_signal[controlInfo.nSignals];
-        double y_signal[controlInfo.nSignals];
+            // tell worker there is work to be done
+            MPI_Send(&isWorkToBeDone, 1, MPI_C_BOOL, workerId, 0, MPI_COMM_WORLD);
 
-        for (int i = 0; i < controlInfo.nSignals; i++) {
-            x_signal[i] = controlInfo.x[i];
-            y_signal[i] = controlInfo.y[i];
+            // send message to worker
+            MPI_Send(&controlInfo, sizeof(ControlInfo), MPI_BYTE, workerId, 0, MPI_COMM_WORLD);
+
+            // The structure containers pointers to the arrays x and y. The MPI cant pass this pointers, so
+            // we will have to pass them as arrays
+            double x_signal[controlInfo.nSignals];
+            double y_signal[controlInfo.nSignals];
+
+            for (int i = 0; i < controlInfo.nSignals; i++) {
+                x_signal[i] = controlInfo.x[i];
+                y_signal[i] = controlInfo.y[i];
+            }
+
+            // send the signals
+            MPI_Send(x_signal, controlInfo.nSignals, MPI_DOUBLE, workerId, 0, MPI_COMM_WORLD);
+            MPI_Send(y_signal, controlInfo.nSignals, MPI_DOUBLE, workerId, 0, MPI_COMM_WORLD);
+
+            // if there are no more data to process
+            if(workerId < numWorkers && !getPieceOfData((ControlInfo *) &controlInfo))
+                break;
         }
 
-        // send the signals
-        MPI_Send(x_signal, controlInfo.nSignals, MPI_DOUBLE, workerAssigned, 0, MPI_COMM_WORLD);
-        MPI_Send(y_signal, controlInfo.nSignals, MPI_DOUBLE, workerAssigned, 0, MPI_COMM_WORLD);
 
-        // wait for workers response
-        MPI_Recv(&controlInfo, sizeof(ControlInfo), MPI_BYTE, workerAssigned, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
-        // save the results in the dispatcher
-        savePartialResults((ControlInfo *) &controlInfo);
+        for (workerId=1; workerId <= lastWorkerReceivingInfo; workerId++) {
+            // wait for workers response
+            MPI_Recv(&controlInfo, sizeof(ControlInfo), MPI_BYTE, workerId, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+
+            // save the results in the dispatcher
+            savePartialResults((ControlInfo *) &controlInfo);
+        }
     }
 
     // Print the results obtained
@@ -121,6 +124,8 @@ void worker(int rank) {
     while (true) {
         // check if there is work to be done
         MPI_Recv(&isWorkToBeDone, 1, MPI_C_BOOL, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+
+
 
         if (!isWorkToBeDone) {
             //printf("Worker with rank %d is leaving...\n", rank);
